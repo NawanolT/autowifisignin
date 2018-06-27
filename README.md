@@ -10,7 +10,7 @@ How to use
 
 1. Download files in the src directory
 2. Open the autowifisignin.sln in Microsoft Visual Studio
-3. Put your username and password on line 16-17 of the file autowifisignin\autowifisignin.cpp
+3. Put your username and password on lines 16-17 of the file autowifisignin\autowifisignin.cpp
 4. Build the project
 5. Run autowifisignin.exe
 
