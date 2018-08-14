@@ -97,8 +97,15 @@ void auto_login()
 	//check for redirection in reply 1
 	p = strstr(psReply, "href=");
 	if(p == NULL)
-		print_error_and_exit("No redirection from reply 1\n");
-	p += 6;
+	{
+		p = strstr(psReply, "window.location=");
+		if(p == NULL)
+			print_error_and_exit("No redirection from reply 1\n");
+		else
+			p += 17;
+	}
+	else
+		p += 6;
 	q = strchr(p, '\"');
 	if(q == NULL)
 		print_error_and_exit("No closing quotes\n");
