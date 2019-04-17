@@ -22,6 +22,7 @@ void print_error_and_exit(const char *s, ...)
 
 	va_start(arguments, s);
 	vprintf(s, arguments);
+	printf("GetLastError returns %d\n", GetLastError());
 	va_end(arguments);
 	system("pause");
 	exit(1);
@@ -34,7 +35,7 @@ void auto_login()
 	unsigned long ulReply_size, ulNum_bytes_read, ulNum_bytes_read_total;
 	char *psReply = NULL, *p, *q, *postData;
 	URL_COMPONENTS urlComp;
-	wchar_t * wcstring;
+	wchar_t * wcstring, wcTmp;
 	size_t numConvertChars, postData_size;
 	int port, iResult;
 
@@ -88,7 +89,7 @@ void auto_login()
 	if(hRequest) WinHttpCloseHandle(hRequest);
 	if(hConnect) WinHttpCloseHandle(hConnect);
 
-	if(strstr(psReply, "http://httpbin.org/get") != NULL)
+	if(strstr(psReply, "httpbin.org/get") != NULL)
 	{
 		printf("Already logged in\n");
 		return;//done
@@ -135,14 +136,16 @@ void auto_login()
 			print_error_and_exit("Cannot scan port\n");
 	}
 	else
-		port = strncmp(p, "https://", 8) ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT;
+		port = strncmp(p, "https://", 8) == 0 ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT;
+	wcTmp = urlComp.lpszHostName[urlComp.dwHostNameLength];
 	urlComp.lpszHostName[urlComp.dwHostNameLength] = 0;
 	//visit login page
 	printf("Visiting login page\n");
 	hConnect = WinHttpConnect(hSession, urlComp.lpszHostName, port, 0);
 	if(hConnect == NULL)
-		print_error_and_exit("WinHttpConnect failed\n");
-	hRequest = WinHttpOpenRequest(hConnect, L"GET", urlComp.lpszUrlPath, NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
+		print_error_and_exit("WinHttpConnect failed 1\n");
+	urlComp.lpszHostName[urlComp.dwHostNameLength] = wcTmp;
+	hRequest = WinHttpOpenRequest(hConnect, L"GET", urlComp.lpszUrlPath, NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, 0);
 	if(hRequest == NULL)
 		print_error_and_exit("WinHttpOpenRequest failed\n");
 	bResult = WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0);
@@ -179,9 +182,12 @@ void auto_login()
 	if(hConnect) WinHttpCloseHandle(hConnect);
 
 	//log in with username and password (prepare POST request)
+	wcTmp = urlComp.lpszHostName[urlComp.dwHostNameLength];
+	urlComp.lpszHostName[urlComp.dwHostNameLength] = 0;
+	port = 6082;
 	hConnect = WinHttpConnect(hSession, urlComp.lpszHostName, port, 0);
 	if(hConnect == NULL)
-		print_error_and_exit("WinHttpConnect failed\n");
+		print_error_and_exit("WinHttpConnect failed 2\n");
 	free(wcstring);
 	hRequest = WinHttpOpenRequest(hConnect, L"POST", L"/php/uid.php", NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
 	if(hRequest == NULL)
